@@ -26,7 +26,7 @@ def save_to_csv(h):
 
 #Input url
 trustpilot_urls = [
-    "https://fr.trustpilot.com/review/beautechoix.com"
+    "https://www.babelio.com/livres/Flaubert-Madame-Bovary/894329/critiques"
 ]
 
 
@@ -35,27 +35,23 @@ def get_reviews(url):
         response = requests.get(url)
         response.raise_for_status()
         soup = BeautifulSoup(response.text, "html.parser",from_encoding='utf-16')
-        review_elements = soup.find_all("div", class_="styles_reviewCardInner__EwDq2")
+        review_elements = soup.find_all("div", class_="post post_con" )
         reviews = []
+        #print(review_elements[0])
+        
+        
         for review in review_elements:
             # Input functions, tag and class
             user = review.find(
-                "span",
-                class_="typography_heading-xxs__QKBS8",
+                "a",
+                class_="lien_croco",
             ).text
             user_id = int(hashlib.sha256(user.encode("utf-16")).hexdigest(), 16) % (10 ** 8)
             
-            heading = review.find(
-                "h2",
-                class_="typography_heading-s__f7029 typography_appearance-default__AAY17",
-            )
-            if not heading:
-                heading=""
-            else:
-                heading = heading.text
-            message = review.find(
-                "p",
-                class_="typography_body-l__KUYFJ typography_appearance-default__AAY17 typography_color-black__5LYEn",
+           
+            message = review_elements[0].find(
+                "div",
+                class_="cri_corps_critique shrinkable text br_150_de_hauteur",
             )
             if not message:
                 message=""
@@ -63,41 +59,33 @@ def get_reviews(url):
                 message = message.text
 
             date = review.find(
-                "time"
+                "span",
+                class_="gris",
             )
             if not date:
                 date=""
             else:
                 date = date.text
             rating = review.find(
-                "div",
-                class_='star-rating_starRating__4rrcf star-rating_medium__iN6Ty'
-            ).img['alt']
-            date_review = review.find(
-                "p",
-                class_ ="typography_body-m__xgxZ_ typography_appearance-default__AAY17" 
-            ).text
-            date_review = date_review.split(":")[1]
+                attrs={'itemprop': 'ratingValue' }  
+            )['content']
             reviews.append(
                 {
                     "User_id": user_id,
-                    "Heading": heading,
                     "Message": message,
                     "Date": date,
-                    "Rating": rating,
-                    "Data_review": date_review
+                    "Rating": rating
                 }
             )
             reviews_sb.append(
                 {
                     "User_id": user_id,
-                    "Heading": heading,
                     "Message": message,
                     "Date": date,
-                    "Rating": rating,
-                    "Data_review": date_review
+                    "Rating": rating
                 }
             )
+            
 
             
         return reviews
@@ -110,7 +98,7 @@ def get_reviews(url):
 if __name__ == "__main__":
     for url in trustpilot_urls:
         base_url = "?"
-        num_pages = 17 
+        num_pages = 2
         #179
         for page in range(1, num_pages + 1):
             page_url = f"{url}?page={page}"
@@ -124,14 +112,14 @@ if __name__ == "__main__":
             if reviews:
                 #reviews_sb.append(reviews)
                 print(f"\nlength {len(reviews)}:")
-                for index, review in enumerate( reviews, start=1):
+                """for index, review in enumerate( reviews, start=1):
                     print(f"\nReview #{index}:")
                     print(f"Userid: {review['User_id']}")
                     print(f"Heading: {review['Heading']}")
                     print(f"Message: {review['Message']}")
                     print(f"Date: {review['Date']}")
                     print(f"Rating: {review['Rating']}")
-                    print(f"Data review: {review['Data_review']}")
+                    print(f"Data review: {review['Data_review']}")"""
                    
             else:
                 print(f"No reviews found for {url}")
