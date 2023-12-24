@@ -11,7 +11,7 @@ reviews_sb = []
 h = []
 def save_to_csv(h):
     try:
-        with open('reviews_hw.csv', 'w', encoding='utf-16', newline='') as csvfile:
+        with open('hwnew.csv', 'w', encoding='utf-16', newline='') as csvfile:
             fieldnames = h
             writer = csv.DictWriter(csvfile, fieldnames=fieldnames, delimiter='\t')
             if csvfile.tell() == 0:
@@ -49,14 +49,23 @@ def get_reviews(url):
             user_id = int(hashlib.sha256(user.encode("utf-16")).hexdigest(), 16) % (10 ** 8)
             
            
-            message = review_elements[0].find(
+            message_find = review.find(
                 "div",
                 class_="cri_corps_critique shrinkable text br_150_de_hauteur",
             )
-            if not message:
-                message=""
+            
+            cont_msg = message_find.find_all(
+                "a"
+            )
+            message=str(message_find.text)
+            """
+            if not cont_msg:
+                #print(message_find.text)
+                message=str(message_find.text)
             else:
-                message = message.text
+                message=str(message_find.text)
+            """
+            
 
             date = review.find(
                 "span",
@@ -68,11 +77,16 @@ def get_reviews(url):
                 date = date.text
             rating = review.find(
                 attrs={'itemprop': 'ratingValue' }  
-            )['content']
+            )
+            if not rating:
+                rating = 2.5
+            else:
+                rating = rating['content']
+
             reviews.append(
                 {
                     "User_id": user_id,
-                    "Message": message,
+                    "Message": str(message).replace('\n', '').replace('\xa0', ''),
                     "Date": date,
                     "Rating": rating
                 }
@@ -80,7 +94,7 @@ def get_reviews(url):
             reviews_sb.append(
                 {
                     "User_id": user_id,
-                    "Message": message,
+                    "Message": str(message).replace('\n', '').replace('\xa0', ''),
                     "Date": date,
                     "Rating": rating
                 }
@@ -98,10 +112,10 @@ def get_reviews(url):
 if __name__ == "__main__":
     for url in trustpilot_urls:
         base_url = "?"
-        num_pages = 2
+        num_pages = 50
         #179
         for page in range(1, num_pages + 1):
-            page_url = f"{url}?page={page}"
+            page_url = f"{url}?a=a&pageN={page}"
             print(f"\nScraping reviews for {page_url}")
             delay_seconds = random.uniform(0.1, 1)
             time.sleep(delay_seconds)
@@ -127,7 +141,7 @@ if __name__ == "__main__":
         
         for key in reviews_sb[0].keys():
             h.append(key)
-        print(h)
+        #print(h)
         save_to_csv(h)
         
         
